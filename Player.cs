@@ -393,7 +393,7 @@ namespace LaserCat
         {
             if (!deathHandled)
             {
-                Velocity = new Vector2(300, -1200); // Throw the player in the top right direction
+                Velocity = new Vector2(300, -800); // Throw the player in the top right direction
                 deathHandled = true;
             }
 
