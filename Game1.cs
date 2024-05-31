@@ -18,7 +18,7 @@ namespace MonogameLearning
         private Texture2D _collisionTexture;
         private SpriteFont _font;
         private Player _player;
-        private List<Enemy> _enemies = new List<Enemy>();
+        private List<Enemy> _enemies;
         Color[,] _collisionMapData;
         private Camera _camera;
         private Song _backgroundMusic;
@@ -47,13 +47,15 @@ namespace MonogameLearning
 
             // actors
             _player = new Player(new Vector2(75, 500));
-            // _player = new Player(playerWalkFrames, new Vector2(3555, 300), 0.05f);
-
-            _enemies.Add(new Enemy(710f, 500f, 610f));
-            _enemies.Add(new Enemy(566f, 790f, 900f));
-            _enemies.Add(new Enemy(782f, 1075f, 1190f));
-            _enemies.Add(new Enemy(347f, 1725f, 1840f));
-            _enemies.Add(new Enemy(638f, 2591f, 2700f));
+            //_player = new Player(new Vector2(3555, 300));
+            _enemies = new List<Enemy>
+            {
+                new Enemy(710f, 500f, 610f),
+                new Enemy(566f, 790f, 900f),
+                new Enemy(782f, 1075f, 1190f),
+                new Enemy(347f, 1725f, 1840f),
+                new Enemy(638f, 2591f, 2700f)
+            };
 
             // cache collision map data
             Color[] rawData = new Color[_collisionMap.Width * _collisionMap.Height];
@@ -71,6 +73,9 @@ namespace MonogameLearning
             // Initialize animation variables
             _currentBackgroundFrame = 0;
             _backgroundFrameTime = 0f;
+
+            // Start the music
+            MediaPlayer.Play(_backgroundMusic);
         }
 
         protected override void LoadContent()
@@ -98,7 +103,6 @@ namespace MonogameLearning
             _font = Content.Load<SpriteFont>("Score");
             _backgroundMusic = Content.Load<Song>("music");
             MediaPlayer.IsRepeating = true;
-            MediaPlayer.Play(_backgroundMusic);
             MediaPlayer.Volume = 0.2f;
 
             // player
@@ -152,6 +156,11 @@ namespace MonogameLearning
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            if (Keyboard.GetState().IsKeyDown(Keys.R))
+            {
+                Initialize();
+            }
+
             if (!_player.Dead && !_player.Won)
             {
                 _player.Update(gameTime, _collisionMapData, _enemies);
@@ -197,21 +206,21 @@ namespace MonogameLearning
 
             if (_player.Dead)
             {
-                var message = "YOU DIED, TRY AGAIN !!!";
+                var message = "YOU DIED, TRY AGAIN !!!\nPress R to restart the game";
+                Vector2 messageSize = _font.MeasureString(message);
+                Vector2 messagePosition = new Vector2(
+                    _camera.Position.X + _graphics.PreferredBackBufferWidth / 2 - messageSize.X / 2,
+                    _camera.Position.Y + _graphics.PreferredBackBufferHeight / 2 - messageSize.Y / 2);
+                _spriteBatch.DrawString(_font, message, messagePosition, Color.DarkRed);
+            }
+            else if (_player.Won)
+            {
+                var message = "YOU WON, BRAVO !!!\nPress R to restart the game";
                 Vector2 messageSize = _font.MeasureString(message);
                 Vector2 messagePosition = new Vector2(
                     _camera.Position.X + _graphics.PreferredBackBufferWidth / 2 - messageSize.X / 2,
                     _camera.Position.Y + _graphics.PreferredBackBufferHeight / 2 - messageSize.Y / 2);
                 _spriteBatch.DrawString(_font, message, messagePosition, Color.Blue);
-            }
-            else if (_player.Won)
-            {
-                var message = "YOU WON, BRAVO !!!";
-                Vector2 messageSize = _font.MeasureString(message);
-                Vector2 messagePosition = new Vector2(
-                    _camera.Position.X + _graphics.PreferredBackBufferWidth / 2 - messageSize.X / 2,
-                    _camera.Position.Y + _graphics.PreferredBackBufferHeight / 2 - messageSize.Y / 2);
-                _spriteBatch.DrawString(_font, message, messagePosition, Color.AliceBlue);
             }
 
             _spriteBatch.End();
