@@ -1,3 +1,3 @@
 ﻿
-using var game = new MonogameLearning.Game1();
+using var game = new LaserCat.Game1();
 game.Run();

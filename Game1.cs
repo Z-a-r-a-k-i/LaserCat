@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using System;
 using System.Collections.Generic;
 
 namespace LaserCat
@@ -14,6 +15,7 @@ namespace LaserCat
         private Texture2D _collisionMap;
         private List<Texture2D> _backgroundMapFrames;
         private Texture2D _collisionTexture;
+        private Texture2D _dieScreen;
         private SpriteFont _font;
         private Player _player;
         private List<Enemy> _enemies;
@@ -21,10 +23,16 @@ namespace LaserCat
         private Camera _camera;
         private Song _backgroundMusic;
 
-        // Animation-related variables
         private int _currentBackgroundFrame;
         private float _backgroundFrameTime;
         private const float BackgroundFrameDuration = 0.08f; // Duration for each frame in seconds
+
+        private List<Texture2D> _youWonFrames;
+        private int _currentYouWonFrame;
+        private float _youWonFrameTime;
+        private const float YouWonFrameDuration = 0.5f; // Duration for each frame in seconds
+
+        private TimeSpan _elapsedTime;
 
         public Game1()
         {
@@ -45,7 +53,7 @@ namespace LaserCat
 
             // actors
             _player = new Player(new Vector2(75, 500));
-            //_player = new Player(new Vector2(3555, 300));
+            // _player = new Player(new Vector2(3555, 300)); // this is if you want to start in the end of the level
             _enemies = new List<Enemy>
             {
                 new Enemy(710f, 500f, 610f),
@@ -71,6 +79,9 @@ namespace LaserCat
             // Initialize animation variables
             _currentBackgroundFrame = 0;
             _backgroundFrameTime = 0f;
+
+            // Initialize timer
+            _elapsedTime = TimeSpan.Zero;
 
             // Start the music
             MediaPlayer.Play(_backgroundMusic);
@@ -102,6 +113,14 @@ namespace LaserCat
             _backgroundMusic = Content.Load<Song>("music");
             MediaPlayer.IsRepeating = true;
             MediaPlayer.Volume = 0.2f;
+            _dieScreen = Content.Load<Texture2D>("die_screen_00000");
+            _youWonFrames = new List<Texture2D>
+            {
+                Content.Load<Texture2D>("win_screen_00000"),
+                Content.Load<Texture2D>("win_screen_00001")
+            };
+            _currentYouWonFrame = 0;
+            _youWonFrameTime = 0f;
 
             // player
             Player.WalkFrames = new List<Texture2D>
@@ -167,6 +186,9 @@ namespace LaserCat
                     enemy.Update(gameTime);
                 }
                 _camera.Update(_player.Position);
+
+                // Update the timer
+                _elapsedTime += gameTime.ElapsedGameTime;
             }
             else if (_player.Dead)
             {
@@ -179,6 +201,16 @@ namespace LaserCat
             {
                 _currentBackgroundFrame = (_currentBackgroundFrame + 1) % _backgroundMapFrames.Count;
                 _backgroundFrameTime = 0f;
+            }
+
+            if (_player.Won)
+            {
+                _youWonFrameTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (_youWonFrameTime >= YouWonFrameDuration)
+                {
+                    _currentYouWonFrame = (_currentYouWonFrame + 1) % _youWonFrames.Count;
+                    _youWonFrameTime = 0f;
+                }
             }
 
             base.Update(gameTime);
@@ -201,28 +233,23 @@ namespace LaserCat
                 enemy.Draw(_spriteBatch);
             }
 
+            // Draw the timer
+            string timerText = _elapsedTime.ToString(@"mm\:ss");
+            Vector2 timerPosition = new Vector2(
+                _camera.Position.X + _graphics.PreferredBackBufferWidth - 200,
+                _camera.Position.Y + 20);
+            _spriteBatch.DrawString(_font, timerText, timerPosition, Color.White);
 
             if (_player.Dead)
             {
-                var message = "YOU DIED, TRY AGAIN !!!\nPress R to restart the game";
-                Vector2 messageSize = _font.MeasureString(message);
-                Vector2 messagePosition = new Vector2(
-                    _camera.Position.X + _graphics.PreferredBackBufferWidth / 2 - messageSize.X / 2,
-                    _camera.Position.Y + _graphics.PreferredBackBufferHeight / 2 - messageSize.Y / 2);
-                _spriteBatch.DrawString(_font, message, messagePosition, Color.DarkRed);
+                _spriteBatch.Draw(_dieScreen, new Rectangle((int)_camera.Position.X, (int)_camera.Position.Y, 1920, 1080), Color.White);
             }
             else if (_player.Won)
             {
-                var message = "YOU WON, BRAVO !!!\nPress R to restart the game";
-                Vector2 messageSize = _font.MeasureString(message);
-                Vector2 messagePosition = new Vector2(
-                    _camera.Position.X + _graphics.PreferredBackBufferWidth / 2 - messageSize.X / 2,
-                    _camera.Position.Y + _graphics.PreferredBackBufferHeight / 2 - messageSize.Y / 2);
-                _spriteBatch.DrawString(_font, message, messagePosition, Color.Blue);
+                _spriteBatch.Draw(_youWonFrames[_currentYouWonFrame], new Rectangle((int)_camera.Position.X, (int)_camera.Position.Y, 1920, 1080), Color.White);
             }
 
             _spriteBatch.End();
-
             base.Draw(gameTime);
         }
     }
