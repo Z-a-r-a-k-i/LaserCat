@@ -14,7 +14,7 @@ namespace MonogameLearning
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         private Texture2D _collisionMap;
-        private Texture2D _backgroundMap;
+        private List<Texture2D> _backgroundMapFrames;
         private Texture2D _collisionTexture;
         private SpriteFont _font;
         private Player _player;
@@ -22,6 +22,11 @@ namespace MonogameLearning
         Color[,] _collisionMapData;
         private Camera _camera;
         private Song _backgroundMusic;
+
+        // Animation-related variables
+        private int _currentBackgroundFrame;
+        private float _backgroundFrameTime;
+        private const float BackgroundFrameDuration = 0.08f; // Duration for each frame in seconds
 
         public Game1()
         {
@@ -62,6 +67,10 @@ namespace MonogameLearning
                     _collisionMapData[x, y] = rawData[x + y * _collisionMap.Width];
                 }
             }
+
+            // Initialize animation variables
+            _currentBackgroundFrame = 0;
+            _backgroundFrameTime = 0f;
         }
 
         protected override void LoadContent()
@@ -69,7 +78,21 @@ namespace MonogameLearning
             // sprites
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _collisionMap = Content.Load<Texture2D>("collision_map_01");
-            _backgroundMap = Content.Load<Texture2D>("background_map");
+            _backgroundMapFrames = new List<Texture2D>
+            {
+                Content.Load<Texture2D>("background/background_00000"),
+                Content.Load<Texture2D>("background/background_00001"),
+                Content.Load<Texture2D>("background/background_00002"),
+                Content.Load<Texture2D>("background/background_00003"),
+                Content.Load<Texture2D>("background/background_00004"),
+                Content.Load<Texture2D>("background/background_00005"),
+                Content.Load<Texture2D>("background/background_00006"),
+                Content.Load<Texture2D>("background/background_00007"),
+                Content.Load<Texture2D>("background/background_00008"),
+                Content.Load<Texture2D>("background/background_00009"),
+                Content.Load<Texture2D>("background/background_00010"),
+                Content.Load<Texture2D>("background/background_00011")
+            };
 
             // misc
             _font = Content.Load<SpriteFont>("Score");
@@ -89,10 +112,8 @@ namespace MonogameLearning
             };
             Player.JumpStartFrames = new List<Texture2D>
             {
-                Content.Load<Texture2D>("cat/JumpStart__00000"),
                 Content.Load<Texture2D>("cat/JumpStart__00001"),
                 Content.Load<Texture2D>("cat/JumpStart__00002"),
-                Content.Load<Texture2D>("cat/JumpStart__00003")
             };
             Player.JumpLandFrames = new List<Texture2D>
             {
@@ -145,6 +166,14 @@ namespace MonogameLearning
                 _player.HandleDeath(gameTime);
             }
 
+            // Update background frame
+            _backgroundFrameTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (_backgroundFrameTime >= BackgroundFrameDuration)
+            {
+                _currentBackgroundFrame = (_currentBackgroundFrame + 1) % _backgroundMapFrames.Count;
+                _backgroundFrameTime = 0f;
+            }
+
             base.Update(gameTime);
         }
 
@@ -154,7 +183,7 @@ namespace MonogameLearning
             _spriteBatch.Begin(transformMatrix: _camera.Transform);
 
             // _spriteBatch.Draw(_collisionMap, new Rectangle(0, 0, 3840, 1080), Color.White);
-            _spriteBatch.Draw(_backgroundMap, new Rectangle(0, 0, 3840, 1080), Color.White);
+            _spriteBatch.Draw(_backgroundMapFrames[_currentBackgroundFrame], new Rectangle(0, 0, 3840, 1080), Color.White);
 
 
             _player.Draw(_spriteBatch);
